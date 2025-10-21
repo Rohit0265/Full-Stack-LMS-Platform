@@ -1,28 +1,21 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import mongoosedb from './config/mongo.js';
-import { Webhook } from './controllers/webhooks.js'; // fixed spelling: controllers ✅
+import mongoosedb from '../../config/mongo.js';
+import { Webhook } from '../../controllers/webhooks.js';
+import serverless from 'serverless-http'; // important!
 
-// Initialize express app
 const app = express();
-
-// Connect to MongoDB
-await mongoosedb(); // make sure you're using Node 18+ or have "type": "module" in package.json
-
-// Middleware
 app.use(cors());
-app.use(express.json()); // moved express.json() here globally ✅
+app.use(express.json());
 
-// Routes
 app.get('/', (req, res) => {
     res.send('Working hai bhai 😎');
 });
-
 app.post('/clerk', Webhook);
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-});
+// MongoDB connection
+await mongoosedb();
+
+// export handler (no app.listen)
+export const handler = serverless(app);
