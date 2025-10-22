@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import mongoosedb from './config/Mongo.js';
+import mongoosedb from './config/mongo.js';
 import { clerkwebhooks } from './controllers/Webhooks.js'; // fixed spelling: controllers ✅
 
 // Initialize express app
