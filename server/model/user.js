@@ -1,10 +1,10 @@
 import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema({
-    _id: { type: string, required: true },
+    _id: { type: String, required: true },
     name: { type: String, required: true },
     email: {
-        type: string,
+        type: String,
         required: true
     },
     imageUrl: {
@@ -12,7 +12,7 @@ const userSchema = new Schema({
         required: true
     },
     enrolledCourses: [{
-        type: mongo.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Course'
     }],
 

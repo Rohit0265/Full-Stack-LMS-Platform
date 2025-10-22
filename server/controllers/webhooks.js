@@ -57,4 +57,4 @@ const clerkwebhooks = async(req, res) => { // fixed parameter name
     }
 };
 
-export default clerkwebhooks;
+export { clerkwebhooks };
