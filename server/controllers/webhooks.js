@@ -31,7 +31,7 @@ const clerkwebhooks = async(req, res) => { // fixed parameter name
             case 'user.updated':
                 {
                     const userdata = {
-                        email: data.email_addresses[0].email_address,
+                        email: data.email_address[0].email_address,
                         name: data.first_name + " " + data.last_name,
                         imageUrl: data.image_url,
                     };
