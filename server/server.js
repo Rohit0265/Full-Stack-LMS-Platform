@@ -11,11 +11,9 @@ await mongoosedb();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => res.send('Working hai bhai 😎'));
 app.post('/clerk', clerkwebhooks);
 
-// ❌ Remove app.listen() for Vercel
 export default app;
