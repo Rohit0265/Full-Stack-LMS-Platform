@@ -1,18 +1,30 @@
 import { Webhook } from "svix";
-import User from "../model/user.js"; // Must match file
+import User from "../model/user.js";
+import bodyParser from "body-parser";
+import express from "express";
 
-const clerkwebhooks = async(req, res) => {
+const app = express();
+
+// Use raw body parser only for webhook route
+app.post("/api/webhooks/clerk", bodyParser.raw({ type: "application/json" }), async(req, res) => {
     try {
-        const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+        let payload;
 
-        // Commented out timestamp for local testing
-        await whook.verify(JSON.stringify(req.body), {
-            "svix-id": req.headers["svix-id"],
-            "svix-timestamp": req.headers["svix-timestamp"],
-            "svix-signature": req.headers["svix-signature"]
-        });
+        // Skip signature verification locally
+        if (process.env.NODE_ENV === "development") {
+            payload = JSON.parse(req.body.toString());
+            console.log("Skipping Svix verification in local environment");
+            console.log("Webhook payload:", payload);
+        } else {
+            const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+            payload = whook.verify(req.body, {
+                "svix-id": req.headers["svix-id"],
+                "svix-timestamp": req.headers["svix-timestamp"],
+                "svix-signature": req.headers["svix-signature"]
+            });
+        }
 
-        const { data, type } = req.body;
+        const { data, type } = payload;
 
         switch (type) {
             case "user.created":
@@ -41,9 +53,9 @@ const clerkwebhooks = async(req, res) => {
         }
 
     } catch (error) {
-        console.error(error); // log for debugging
+        console.error(error);
         return res.json({ success: false, message: error.message });
     }
-};
+});
 
-export { clerkwebhooks };
+export { app };
