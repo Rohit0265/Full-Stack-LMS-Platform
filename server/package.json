@@ -21,7 +21,7 @@
         "nodemon": "^3.1.10",
         "serverless-http": "^4.0.0",
         "stripe": "^19.1.0",
-        "svix": "^1.42.0",
+        "svix": "^1.79.0",
         "vercel": "^48.5.0"
     },
     "description": ""
