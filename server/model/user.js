@@ -16,7 +16,7 @@ const userSchema = new Schema({
         ref: 'Course'
     }],
 
-})
+}, { timestamps: true })
 
 
 const User = mongoose.model('user', userSchema);
