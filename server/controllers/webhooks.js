@@ -26,42 +26,61 @@ const clerkwebhooks = async(req, res) => {
         // --- Process the Body (Parsed after potential verification/skip) ---
         // Convert the raw Buffer body to a string, then parse the JSON
         const body = JSON.parse(rawBody.toString('utf8'));
+        console.log(`✅ Webhook body parsed successfully. Type: ${body.type}`);
+
         const { data, type } = body;
 
         switch (type) {
             case "user.created":
-                await User.create({
-                    _id: data.id,
-                    email: data.email_addresses[0].email_address,
-                    name: `${data.first_name} ${data.last_name}`,
-                    imageUrl: data.image_url
-                });
-                return res.json({ success: true, message: "User created" });
+                console.log(`➡️ Processing: ${type} for ID: ${data.id}`);
+                try {
+                    await User.create({
+                        _id: data.id,
+                        email: data.email_addresses[0].email_address,
+                        name: `${data.first_name} ${data.last_name}`,
+                        imageUrl: data.image_url
+                    });
+                    return res.json({ success: true, message: "User created" });
+                } catch (mongooseError) {
+                    console.error("❌ Mongoose Creation Error:", mongooseError.message);
+                    throw new Error("DB Create Failed");
+                }
 
             case "user.updated":
-                await User.findByIdAndUpdate(data.id, {
-                    email: data.email_addresses[0].email_address,
-                    name: `${data.first_name} ${data.last_name}`,
-                    imageUrl: data.image_url
-                });
-                return res.json({ success: true, message: "User updated" });
+                console.log(`➡️ Processing: ${type} for ID: ${data.id}`);
+                try {
+                    await User.findByIdAndUpdate(data.id, {
+                        email: data.email_addresses[0].email_address,
+                        name: `${data.first_name} ${data.last_name}`,
+                        imageUrl: data.image_url
+                    });
+                    return res.json({ success: true, message: "User updated" });
+                } catch (mongooseError) {
+                    console.error("❌ Mongoose Update Error:", mongooseError.message);
+                    throw new Error("DB Update Failed");
+                }
 
             case "user.deleted":
-                // In Clerk, data is null for user.deleted, but data.id is available at the top level of the payload.
-                // We use body.id or fall back to data.id for safety.
                 const userIdToDelete = data.id || body.data ? .id;
-                if (userIdToDelete) {
-                    await User.findByIdAndDelete(userIdToDelete);
+                console.log(`➡️ Processing: ${type}. Deleting ID: ${userIdToDelete}`);
+                try {
+                    if (userIdToDelete) {
+                        await User.findByIdAndDelete(userIdToDelete);
+                    }
+                    return res.json({ success: true, message: "User deleted" });
+                } catch (mongooseError) {
+                    console.error("❌ Mongoose Delete Error:", mongooseError.message);
+                    throw new Error("DB Delete Failed");
                 }
-                return res.json({ success: true, message: "User deleted" });
+
 
             default:
                 return res.json({ success: true, message: `Unhandled event type: ${type}` });
         }
 
     } catch (error) {
-        console.error("Clerk Webhook Error:", error);
-        // Return a 400 Bad Request if verification or processing fails
+        console.error("Clerk Webhook Handler Crash:", error.message);
+        // Returning 400 status for known handler issues (like verification failure or parsing)
         return res.status(400).json({ success: false, message: error.message });
     }
 };
