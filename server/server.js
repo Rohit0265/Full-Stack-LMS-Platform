@@ -15,7 +15,7 @@ app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => res.send('Working hai bhai 😎'));
-app.post('/clerk', bodyParser.raw({ type: "application/json" }), clerkwebhooks);
+app.post('/clerk', clerkwebhooks);
 
 // ❌ Remove app.listen() for Vercel
 export default app;
