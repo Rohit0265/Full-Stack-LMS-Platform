@@ -81,72 +81,59 @@ export const purchaseCourse = async(req, res) => {
         const origin = req.headers.origin || "http://localhost:5173";
         const clerkId = req.auth.userId;
 
-        // ✅ 1. Find user & course
+        // 1️⃣ Find user using clerkId
         const userData = await User.findOne({ clerkId });
-        const courseData = await Course.findById(courseId);
-
-        if (!userData || !courseData) {
-            return res.json({ success: false, message: "Data Not Found" });
+        if (!userData) {
+            return res.json({ success: false, message: "User not found" });
         }
 
-        // ✅ 2. Calculate final amount
-        const amount =
-            courseData.coursePrice -
-            (courseData.discount * courseData.coursePrice) / 100;
+        // 2️⃣ Find course
+        const courseData = await Course.findById(courseId);
+        if (!courseData) {
+            return res.json({ success: false, message: "Course not found" });
+        }
 
-        // ✅ 3. Create purchase record
-        const newPurchase = await Purchase.create({
-            courseId: courseData._id,
-            userId: userData._id,
-            amount: Number(amount.toFixed(2)),
-            status: "pending",
-        });
+        // 3️⃣ Create Stripe session
+        const stripeInstance = new Stripe(process.env.STRIPE_SECRET);
 
-        console.log("🧾 New Purchase Created:", newPurchase._id);
-
-        // ✅ 4. Initialize Stripe
-        const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-        // ✅ 5. Prepare line items
-        const line_items = [{
-            price_data: {
-                currency: process.env.CURRENCY.toLowerCase() || "usd",
-                product_data: {
-                    name: courseData.courseTitle,
-                    description: courseData.courseDescription || "Course purchase",
-                },
-                unit_amount: Math.round(amount * 100),
-            },
-            quantity: 1,
-        }, ];
-
-        // ✅ 6. Create Checkout Session (with purchaseId in metadata)
         const session = await stripeInstance.checkout.sessions.create({
-            success_url: `${origin}/loading/my-enrollments`,
-            cancel_url: `${origin}/course/${courseData._id}`,
-            line_items,
+            success_url: origin + "/loading/my-enrollments",
+            cancel_url: origin,
+            line_items: [{
+                price_data: {
+                    currency: "inr",
+                    product_data: { name: courseData.courseTitle },
+                    unit_amount: Math.round(amount * 100),
+                },
+                quantity: 1,
+            }],
             mode: "payment",
             metadata: {
-                purchaseId: String(newPurchase._id),
+                purchaseId: purchaseIdStr,
             },
+            client_reference_id: purchaseIdStr,
         });
 
-        console.log("✅ Stripe session created:", session.id);
 
-        // 🧠 IMPORTANT:
-        // Do NOT update payment status here.
-        // Wait for Stripe webhook (payment_intent.succeeded / payment_intent.payment_failed)
-        // to mark as completed or failed.
+        // 4️⃣ Create Purchase using MongoDB userId (NOT clerkId)
+        await Purchase.create({
+            userId: userData._id, // FIX HERE
+            courseId: courseId,
+            purchaseStatus: "pending",
+            stripeSessionId: stripeSession.id,
+        });
 
-        console.log("ℹ️ Payment pending, waiting for Stripe webhook confirmation...");
+        res.json({
+            success: true,
+            url: stripeSession.url,
+        });
 
-        // ✅ 7. Return checkout URL to frontend
-        res.json({ success: true, session_url: session.url });
     } catch (error) {
         console.error("❌ purchaseCourse error:", error);
         res.json({ success: false, message: error.message });
     }
 };
+
 
 
 

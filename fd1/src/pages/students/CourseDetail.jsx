@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { getCourseId } from "../../../../server/controllers/courseContoller";
 
+
 function CourseDetail() {
   const { id } = useParams();
   const [coursedata, setcoursedata] = useState(null);
@@ -49,35 +50,36 @@ function CourseDetail() {
     setarrow((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 const { id: courseId } = useParams();
- const EnrollCourse = async () => {
+
+const EnrollCourse = async () => {
     try {
-      console.log(courseId)
-      const token = await getToken();
-      
-      const response = await axios.post(
-        `${backendUrl}/api/user/purchase`,
-        { courseId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        console.log("COURSE ID:", courseId);
+
+        const token = await getToken();
+        
+        const response = await axios.post(
+            `${backendUrl}/api/user/purchase`,
+            { courseId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log("🔥 Purchase API:", response.data);
+
+        if (response.data.success && response.data.url) {
+            window.location.href = response.data.url; // stripe checkout
+        } else {
+            alert(response.data.message || "Something went wrong while creating checkout.");
         }
-      );
-
-      console.log("✅ Purchase API response:", response.data);
-
-      if (response.data.success && response.data.session_url) {
-        // ✅ Redirect user to Stripe payment page
-        window.location.href = response.data.session_url;
-      } else {
-        alert(response.data.message || "Something went wrong while creating checkout.");
-      }
 
     } catch (error) {
-      console.error("❌ Enrollment failed:", error.response?.data || error.message);
-      alert("Payment session could not be created.");
+        console.error("❌ Enrollment failed:", error.response?.data || error.message);
+        alert("Payment session could not be created.");
     }
-  };
+};
 
   useEffect(() => {
     fetchdata();

@@ -64,7 +64,7 @@ function Enrollment() {
   useEffect(() => {
     if (!userData) {
       toast.error("Please login first");
-      navigate("/login");
+      navigate("/my-enrollment");
     }
   }, [userData]);
 
