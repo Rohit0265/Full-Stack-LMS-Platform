@@ -25,9 +25,8 @@ The platform supports multiple user roles and provides features for managing cou
 
 ### Frontend
 - React  
-- TypeScript  
+- JavaScript  
 - Tailwind CSS  
-- shadcn/ui  
 
 ### Backend
 - Node.js  
